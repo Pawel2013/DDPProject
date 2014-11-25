@@ -8,7 +8,7 @@ http://htmlpreview.github.io/?https://github.com/Pawel2013/DDPProject/blob/maste
 or using gh-pages at      
 http://pawel2013.github.io/DDPProject/Presentation/KDE-Presentation.html#/   
 or via RPubs link   
-http://rpubs.com/Pawel2013/44643
+http://rpubs.com/Pawel2013/43834
 
 ##What to do:
 

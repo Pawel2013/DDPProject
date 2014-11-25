@@ -1,0 +1,179 @@
+
+
+Kernel density estimation
+========================================================
+author: Pawel Borowiec
+date: `r format(Sys.Date(), format="%B %Y")`
+transition: rotate
+
+<small>
+Pitch Presentation 
+<br>
+<strong style="">with embeded R code</strong>, BUT with 'echo=FALSE' option
+<br>
+The full .Rpress file is here
+<a href='https://github.com/Pawel2013/DDPProject/blob/master/Presentation/KDE.Rpres'>KDE.Rpres</a>
+</small>
+
+    
+Data smoothing problem via KDE
+========================================================
+transition: linear
+
+More details on http://en.wikipedia.org/wiki/Kernel_density_estimation link.   
+For real shiny application click https://mycourseraaccount.shinyapps.io/kde-app/
+
+- What is unknown probability density function (values) ?
+- How is it related to histogram ?
+- What is the best method to estimate it ?
+- **Which** parameter is most important ?
+- Implementation in R is delivered by '**density**' function
+- '**quantmod**' package is used to get daily EUR/PLN exchange rates from the beginning of 2014 year.
+
+
+```{r, echo=FALSE}
+
+library(quantmod)
+# get data from oanda.com
+EUR <- getFX("EUR/PLN",from="2014-01-01", auto.assign = FALSE)
+# calculate daily returns
+EUR <- dailyReturn(EUR)
+EUR <- 100.0*EUR[2:length(EUR)]
+
+```
+
+Histogram with different bandwith mehods 
+========================================================
+transition: linear
+
+All bandwith selection algorithms except '**ucv**' has small impact on estimated density function values.
+
+```{r, fig.align='center', echo=FALSE}
+
+symbol <- EUR
+# We have to find maximum probability
+h <- hist(symbol, probability=TRUE,main=names(symbol), col="lightblue", plot=FALSE)
+Max <- max(h$density)
+
+bandWidthMethods <- c("nrd0", "nrd", "ucv", "bcv", "SJ-ste", "Sj-dpi")
+# Iteration through all bandtwith selection methods
+for (i in 1:length(bandWidthMethods))
+{
+  dens <- density(symbol, bw=bandWidthMethods[i])
+  # We must correct if Max for histogram is < Max for density    
+  if (Max < max(dens$y))
+  {
+    Max <-  max(dens$y) 
+  }
+  Max <- Max;
+}
+
+# We plott histogram
+hist(symbol, probability=TRUE,ylim=c(0,Max),main=names(symbol), col="lightblue")
+for (i in 1:length(bandWidthMethods))
+{
+  # We plot lines of density
+  lines(density(symbol, bw=bandWidthMethods[i]), col=i, lwd=2) 
+}
+n <- length(bandWidthMethods)
+colors <- 1:n
+lty <- rep(1,n)
+lwd <- rep(2,n)
+pch <- rep(NA,n)
+
+# We add legend
+legend("topright",legend=c("Histogram",bandWidthMethods),lty=c(NA,lty), lwd=c(NA,lwd), pch = c(15,pch), col = c("lightblue", colors),
+         merge=TRUE,inset=.01,cex=1.1,adj=0, text.font=1)
+
+```
+Histogram with different kernel mehods 
+========================================================
+transition: linear
+
+Here we can see that different kernel functions give us similar result.
+
+```{r, fig.align='center', echo=FALSE}
+
+symbol <- EUR
+# We have to find maximum probability
+h <- hist(symbol, probability=TRUE,main=names(symbol), col="lightblue", plot=FALSE)
+Max <- max(h$density)
+
+kernelMethods <- c("gaussian", "epanechnikov", "rectangular", "triangular", "biweight", "cosine", "optcosine")
+
+# Iteration through all kernel methods
+for (i in 1:length(kernelMethods))
+{
+  dens <- density(symbol, kernel=kernelMethods[i])
+  # We must correct if Max for histogram is < Max for density    
+  if (Max < max(dens$y))
+  {
+    Max <-  max(dens$y) 
+  }
+  Max <- Max;
+}
+
+# We plott histogram
+hist(symbol, probability=TRUE,ylim=c(0,Max),main=names(symbol), col="lightblue")
+# We plot lines of density
+for (i in 1:length(kernelMethods))
+{
+  lines(density(symbol, kernel=kernelMethods[i]), col=i, lwd=2) 
+}
+
+n <- length(kernelMethods)
+colors <- 1:n
+lty <- rep(1,n)
+lwd <- rep(2,n)
+pch <- rep(NA,n)
+# We add legend
+legend("topright",legend=c("Histogram",kernelMethods),lty=c(NA,lty), lwd=c(NA,lwd), pch = c(15,pch), col = c("lightblue", colors),
+         merge=TRUE,inset=.01,cex=.9,adj=0)
+
+```
+Histogram with different adjustments 
+========================================================
+transition: linear
+
+Optimal kernel bandtwith is the most important parameter.
+
+```{r,  fig.align='center', echo=FALSE}
+
+symbol <- EUR
+# We have to find maximum probability
+h <- hist(symbol, probability=TRUE,main=names(symbol), col="lightblue", plot=FALSE)
+Max <- max(h$density)
+
+adjustBandWidth <- c(1.0 ,0.25, 4.0)
+
+# Iteration through all bandtwith adjustements
+for (i in 1:length(adjustBandWidth))
+{
+  dens <- density(symbol, adjust=adjustBandWidth[i])
+  # We must correct if Max for histogram is < Max for density    
+  if (Max < max(dens$y))
+  {
+    Max <-  max(dens$y) 
+  }
+  Max <- Max;
+}
+
+# We plot histogram
+hist(symbol, probability=TRUE,ylim=c(0,Max),main=names(symbol), col="lightblue", plot=TRUE)
+# We plot lines of density
+for (i in 1:length(adjustBandWidth))
+  {
+    lines(density(symbol, kernel="gaussian", adjust=adjustBandWidth[i]), col=i, lwd=2)
+    
+  }
+
+n <- length(adjustBandWidth)
+colors <- 1:n
+lty <- rep(1,n)
+lwd <- rep(2,n)
+pch <- rep(NA,n)
+# We add legend
+legend("topright",legend=c("Histogram",adjustBandWidth),lty=c(NA,lty), lwd=c(NA,lwd), pch = c(15,pch), col = c("lightblue", colors),
+         merge=TRUE,inset=.01,cex=.9,adj=0)
+
+```
